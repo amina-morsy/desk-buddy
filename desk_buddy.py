@@ -8,9 +8,11 @@ import secrets
 
 
 
-wlan = network.WLAN(network.STA_IF)   # STA_IF, station mode, means the board joins an existing network
-wlan.active(True)                     # turn Wi-Fi on
-wlan.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)       # network name, password
+wlan = network.WLAN(network.STA_IF)# STA_IF, station mode, means the board joins an existing network
+wlan.active(True)
+if not wlan.isconnected():
+    wlan.disconnect()          # cancel any half-finished connection attempt
+    wlan.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)      # network name, password
 
 print("Connecting", end="")
 for i in range(40):
@@ -44,7 +46,7 @@ print("Time in Rome: {:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])) #{:02d} for
 
 
 i2c = I2C(0, scl=Pin(9), sda=Pin(8))      # set up the 2-wire connection
-oled = sh1106.SH1106_I2C(128, 64, i2c)    # the screen is 128 x 64 pixels
+oled = sh1106.SH1106_I2C(128, 64, i2c, rotate=180)    # the screen is 128 x 64 pixels
 
      
 def draw_open(offset=0):
