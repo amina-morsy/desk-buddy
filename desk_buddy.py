@@ -5,7 +5,7 @@ import sh1106
 import random
 import ntptime
 import secrets
-
+import math
 
 
 wlan = network.WLAN(network.STA_IF)# STA_IF, station mode, means the board joins an existing network
@@ -48,17 +48,63 @@ print("Time in Rome: {:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])) #{:02d} for
 i2c = I2C(0, scl=Pin(9), sda=Pin(8))      # set up the 2-wire connection
 oled = sh1106.SH1106_I2C(128, 64, i2c, rotate=180)    # the screen is 128 x 64 pixels
 
+def dome(cx, cy, rx, ry, c=1):
+    for dy in range(-ry, 1):
+        w = int(rx * math.sqrt(1 - (dy / ry) ** 2))
+        oled.hline(cx - w, cy + dy, 2 * w + 1, c)        # draw that row
+
+
+def draw_face(expression="neutral", offset=0):
+    oled.fill(0)
+    if expression=="neutral":
+        oled.fill_rect(21+offset, 8, 26, 28, 1)
+        oled.fill_rect(81+offset, 8, 26, 28, 1)
+        oled.ellipse(64 + offset, 44, 7, 6, 1)       # full oval outline
+        oled.ellipse(64 + offset, 45, 7, 6, 1)       # second one, for thickness
+        oled.fill_rect(53 + offset, 38, 23, 7, 0)     # black box hides the top half
+    elif expression=="sleepy":
+        oled.fill_rect(21+offset, 24, 26, 12, 1)
+        oled.fill_rect(81+offset, 24, 26, 12, 1)
+        oled.hline(58+offset, 46, 12, 1)
+    elif expression=="surprised":
+        oled.fill_rect(21+offset, 4, 26, 34, 1)
+        oled.fill_rect(81+offset, 4, 26, 34, 1)
+        oled.ellipse(64 + offset, 50, 5, 5, 1)
+        oled.ellipse(64 + offset, 50, 4, 4, 1)
+        oled.ellipse(64 + offset, 50, 3, 3, 1)       # full oval outline
+    elif expression =="happy":
+        dome(34 + offset, 26, 13, 12)        # white dome
+        dome(94 + offset, 26, 13, 12)
+        dome(34 + offset, 26, 9, 8, 0)       # black dome inside, hollows it out
+        dome(94 + offset, 26, 9, 8, 0)
+        oled.ellipse(64 + offset, 44, 7, 6, 1)       # full oval outline
+        oled.ellipse(64 + offset, 45, 7, 6, 1)       # second one, for thickness
+        oled.fill_rect(53 + offset, 38, 23, 7, 0) # black box hides the top half
+    oled.show()
+    
+def current_expression():
+    t=local_time()
+    hour=t[3]
+    if hour==23 or hour<7:
+        return "sleepy"
+    return "neutral"
+    
      
 def draw_open(offset=0):
-    oled.fill(0)
-    oled.fill_rect(19+offset, 14, 30, 36, 1)
-    oled.fill_rect(79+offset, 14, 30, 36, 1)
-    oled.show()
+    draw_face(current_expression(), offset)
 
-def draw_closed():
+def draw_closed(offset=0):
     oled.fill(0)
-    oled.fill_rect(19, 30, 30, 4, 1)
-    oled.fill_rect(79, 30, 30, 4, 1)
+    if current_expression()=="sleepy":
+        oled.fill_rect(21, 32, 26, 4, 1)
+        oled.fill_rect(81, 32, 26, 4, 1)
+        oled.hline(58+offset, 46, 12, 1)
+    else:
+        oled.fill_rect(21, 20, 26, 4, 1)
+        oled.fill_rect(81, 20, 26, 4, 1)
+        oleoled.ellipse(64 + offset, 44, 7, 6, 1)        # smile
+        oled.ellipse(64 + offset, 45, 7, 6, 1)
+        oled.fill_rect(53 + offset, 38, 23, 7, 0)
     oled.show()
 
 def blink():
@@ -128,7 +174,12 @@ def wait(seconds, current_mode):
         time.sleep(0.05)
     return True                      # waited the full time
 
-
+# --- temporary test of the faces ---
+for face in ["neutral", "happy", "sleepy", "surprised"]:
+    print(face)
+    draw_face(face)
+    time.sleep(3)
+# --- end of test ---
 
 
 while True:
