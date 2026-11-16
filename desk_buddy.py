@@ -102,7 +102,7 @@ def draw_closed(offset=0):
     else:
         oled.fill_rect(21, 20, 26, 4, 1)
         oled.fill_rect(81, 20, 26, 4, 1)
-        oleoled.ellipse(64 + offset, 44, 7, 6, 1)        # smile
+        oled.ellipse(64 + offset, 44, 7, 6, 1)        # smile
         oled.ellipse(64 + offset, 45, 7, 6, 1)
         oled.fill_rect(53 + offset, 38, 23, 7, 0)
     oled.show()
@@ -126,6 +126,11 @@ def show_eyes():
     blink()
     if random.random()<0.2:
         look_around()
+    if random.random()<0.1 and current_expression()!="sleepy":
+        draw_face("happy")
+        if wait(2, "eyes"): #not time.sleep so that boot button still works
+            draw_open()
+        
 
 def show_clock():
     oled.fill(0)
